@@ -7,6 +7,7 @@ import StatusMessage from './components/StatusMessage';
 import EditModal from './components/EditModal';
 
 function App() {
+  // ===== STATE =====
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentFilter, setCurrentFilter] = useState('all');
@@ -16,6 +17,21 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [backendStatus, setBackendStatus] = useState('Checking...');
 
+  // ===== LOCAL STORAGE =====
+  const loadFromLocalStorage = () => {
+    const saved = localStorage.getItem('users');
+    if (saved) {
+      setUsers(JSON.parse(saved));
+      return true;
+    }
+    return false;
+  };
+
+  const saveToLocalStorage = (userList) => {
+    localStorage.setItem('users', JSON.stringify(userList));
+  };
+
+  // ===== FILTER USERS =====
   const getFilteredUsers = () => {
     let filtered = [...users];
     if (searchTerm.trim() !== '') {
@@ -31,96 +47,28 @@ function App() {
     return filtered;
   };
 
+  // ===== COUNTERS =====
   const totalCount = users.length;
   const apiCount = users.filter(u => u.source === 'api').length;
+  const localCount = users.filter(u => u.source !== 'api').length;
 
-  // ===== Load users and Check Connection ONLY ONCE =====
-  useEffect(() => {
-    setStatus({ message: '⏳ Loading users...', type: 'loading' });
-    setBackendStatus('Checking...');
-
-    const checkBackend = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/users', {
-          cache: 'no-store'
-        });
-        if (!response.ok) throw new Error('Failed to fetch');
-        
-        const backendUsers = await response.json();
-        const mappedUsers = backendUsers.map(u => ({ ...u, source: 'api' }));
-        
-        setUsers(mappedUsers);
-        setBackendStatus('✅ Backend Connected');
-        setStatus({ message: '✅ Backend Connected. Users loaded.', type: 'success' });
-        
-        // Hide the message after 3 seconds
-        setTimeout(() => {
-          setStatus({ message: '', type: '' });
-        }, 3000);
-        
-      } catch (error) {
-        console.error('Error fetching backend users:', error);
-        
-        setUsers([]);
-        setStatus({ message: '❌ Backend Offline. Please start the server.', type: 'error' });
-        setBackendStatus('❌ Backend Offline');
-      }
-    };
-
-    checkBackend(); // ONLY check when page loads
-  }, []);
-
-  // ===== UPDATED: Add user (POST) =====
-  const addUser = async (name, email, course) => {
+  // ===== CRUD OPERATIONS =====
+  const addUser = (name, email, course) => {
     if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
       return 'duplicate';
     }
-    
-    try {
-      const response = await fetch('http://localhost:5000/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, course })
-      });
-      
-      if (response.status === 201) {
-        const newUser = await response.json();
-        const updatedUsers = [...users, { ...newUser, source: 'api' }];
-        setUsers(updatedUsers);
-        return 'success';
-      } else {
-        // READ THE ERROR MESSAGE FROM THE BACKEND
-        const errorData = await response.json();
-        alert('Error: ' + errorData.message);
-        return 'error';
-      }
-    } catch (error) {
-      console.error('Error adding user:', error);
-      alert('Cannot reach backend server. Please run your backend.');
-      return 'error';
-    }
+    const newUser = { id: Date.now(), name, email, course, source: 'local' };
+    const updatedUsers = [...users, newUser];
+    setUsers(updatedUsers);
+    saveToLocalStorage(updatedUsers);
+    return 'success';
   };
 
-  // ===== UPDATED: Delete user (DELETE) =====
-  const deleteUser = async (id) => {
+  const deleteUser = (id) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
-    
-    try {
-      const response = await fetch(`http://localhost:5000/api/users/${id}`, {
-        method: 'DELETE'
-      });
-      
-      if (response.ok) {
-        const updatedUsers = users.filter(u => u.id !== id);
-        setUsers(updatedUsers);
-      } else {
-        const errorData = await response.json();
-        alert('Error: ' + errorData.message);
-      }
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      alert('Cannot reach backend server. Please run your backend.');
-    }
+    const updatedUsers = users.filter(u => u.id !== id);
+    setUsers(updatedUsers);
+    saveToLocalStorage(updatedUsers);
   };
 
   const editUser = (user) => {
@@ -128,35 +76,41 @@ function App() {
     setIsModalOpen(true);
   };
 
-  // ===== UPDATED: Save Edit (PUT) =====
-  const saveEdit = async (id, name, email, course) => {
+  const saveEdit = (id, name, email, course) => {
     if (users.some(u => u.email.toLowerCase() === email.toLowerCase() && u.id !== id)) {
       alert('Email already exists.');
       return;
     }
-    
+    const updatedUsers = users.map(u =>
+      u.id === id ? { ...u, name, email, course } : u
+    );
+    setUsers(updatedUsers);
+    saveToLocalStorage(updatedUsers);
+  };
+
+  // ===== FETCH API USERS =====
+  const fetchApiUsers = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/users/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, course })
-      });
-      
-      if (response.ok) {
-        const updatedUser = await response.json();
-        const updatedUsers = users.map(u =>
-          u.id === id ? { ...updatedUser, source: 'api' } : u
-        );
+      setStatus({ message: 'Loading users...', type: 'loading' });
+      const response = await fetch('https://jsonplaceholder.typicode.com/users');
+      if (!response.ok) throw new Error('Failed to fetch');
+      const apiUsers = await response.json();
+      const mapped = apiUsers.map(u => ({
+        id: 'api_' + u.id,
+        name: u.name,
+        email: u.email,
+        course: 'MERN',
+        source: 'api'
+      }));
+      if (!users.some(u => u.source === 'api')) {
+        const updatedUsers = [...users, ...mapped];
         setUsers(updatedUsers);
-        setIsModalOpen(false);
-        setEditingUser(null);
-      } else {
-        const errorData = await response.json();
-        alert('Error: ' + errorData.message);
+        saveToLocalStorage(updatedUsers);
       }
+      setStatus({ message: '', type: '' });
     } catch (error) {
-      console.error('Error updating user:', error);
-      alert('Cannot reach backend server. Please run your backend.');
+      console.error(error);
+      setStatus({ message: 'Unable to load users.', type: 'error' });
     }
   };
 
@@ -184,14 +138,17 @@ function App() {
     }
   };
 
+  // ===== DARK MODE =====
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     localStorage.setItem('darkMode', !darkMode ? 'true' : 'false');
   };
 
-  // Only load dark mode setting, no fake API calls
+  // ===== USE EFFECTS =====
   useEffect(() => {
     if (localStorage.getItem('darkMode') === 'true') setDarkMode(true);
+    loadFromLocalStorage();
+    fetchApiUsers();
   }, []);
 
   useEffect(() => {
@@ -208,17 +165,19 @@ function App() {
 
   const filteredUsers = getFilteredUsers();
 
+  // ===== RENDER =====
   return (
     <div className="gradient-bg transition-colors duration-500">
       <div className="max-w-7xl mx-auto">
         <Header
           userCount={totalCount}
           apiCount={apiCount}
+          localCount={localCount}
           darkMode={darkMode}
           toggleDarkMode={toggleDarkMode}
         />
 
-        {/* BACKEND STATUS */}
+        {/* ===== BACKEND STATUS ===== */}
         <div className="glass-card p-4 mb-4">
           <div className="flex items-center gap-3">
             <span className="text-2xl">🖥️</span>
@@ -229,7 +188,7 @@ function App() {
           </div>
         </div>
 
-        {/* BACKEND API TEST */}
+        {/* ===== BACKEND API TEST ===== */}
         <div className="glass-card p-4 mb-4">
           <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-3">🌐 Backend API Test</h3>
           <button onClick={testApi} className="btn-primary">Test /api/users</button>
@@ -243,24 +202,20 @@ function App() {
           onFilterChange={setCurrentFilter}
         />
         <StatusMessage message={status.message} type={status.type} />
-        <section className="glass-card p-6 md:p-8 animate-slide-up delay-3">
+        
+        <section className="glass-card p-6 md:p-8">
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
               <span className="w-10 h-10 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/25">
                 <i className="fas fa-users"></i>
               </span>
               Users
-              <span className="text-sm font-normal text-gray-400 dark:text-gray-500">
-                — Manage all users
-              </span>
+              <span className="text-sm font-normal text-gray-400 dark:text-gray-500">— Manage all users</span>
             </h2>
           </div>
-          <UserList
-            users={filteredUsers}
-            onEdit={editUser}
-            onDelete={deleteUser}
-          />
+          <UserList users={filteredUsers} onEdit={editUser} onDelete={deleteUser} />
         </section>
+        
         <EditModal
           isOpen={isModalOpen}
           user={editingUser}
