@@ -19,7 +19,7 @@ A full-stack User Management Dashboard built using **React (Vite)**
 ##  Project Structure
   
     `````
-	tailwind-dashboard/
+	dashboard/
 │
 ├── backend/ # Express Backend
 │ ├── controllers/
