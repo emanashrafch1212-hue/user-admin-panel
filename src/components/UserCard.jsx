@@ -5,18 +5,14 @@ function UserCard({ user, isLocal, onEdit, onDelete }) {
       <div className="card-email">{user.email}</div>
       <div className="flex items-center justify-between flex-wrap gap-2">
         <span className="card-course">{user.course}</span>
-        {isLocal ? (
-          <div className="card-actions">
-            <button onClick={() => onEdit(user)} className="btn-edit">
-              ✏️ Edit
-            </button>
-            <button onClick={() => onDelete(user.id)} className="btn-danger">
-              🗑️ Delete
-            </button>
-          </div>
-        ) : (
-          <span className="text-sm text-gray-400 dark:text-gray-500">API User</span>
-        )}
+        <div className="card-actions">
+          <button onClick={() => onEdit(user)} className="btn-edit">
+            ✏️ Edit
+          </button>
+          <button onClick={() => onDelete(user.id)} className="btn-danger">
+            🗑️ Delete
+          </button>
+        </div>
       </div>
     </div>
   );

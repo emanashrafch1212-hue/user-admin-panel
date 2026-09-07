@@ -1,87 +1,88 @@
-#  User Management Dashboard - React Version
+# User Management Dashboard (Express.js Backend )
 
-A complete user management system built with **React, Vite, and Tailwind CSS**, featuring local storage persistence, API integration, and a fully responsive design.
-
----
-
-##  Features
-
-### Core Features
- **Add User** - Add new users with name, email, and course
- **Display Users** - View all users in beautiful cards with gradient text
- **Search User** - Real-time search by name
- **Delete User** - Remove users with confirmation dialog
- **Edit User** - Update user information with a professional modal
- **Local Storage** - Data persists after page refresh
-  **API Integration** - Auto-loads users from JSONPlaceholder
-
-### Bonus Features
- **Course Filter** - Filter users by course (MERN, React, Node.js, C++, Python)
- **User Counter** - Total, API, and Local user counts
- **Form Validation** - Required fields and email format validation
- **Dark Mode** - Toggle between light and dark themes with persistence
- **Professional UI** - Glass-morphism effects, gradients, and animations
-**Responsive Design** - Works on mobile, tablet, and desktop
+A full-stack User Management Dashboard built using **React (Vite)**
+ for the frontend and **Express.js** for the backend. This assignment
+ focuses on building a proper REST API, connecting the frontend to the
+ backend, and handling HTTP requests/responses correctly.
 
 ---
 
-## ️ Technologies Used
+##  Tech Stack
 
-| Technology | Purpose |
-|------------|---------|
-| **React** | Component-based UI |
-| **Vite** | Fast build tool |
-| **Tailwind CSS** | Utility-first styling |
-| **JavaScript (ES6+)** | Application logic |
-| **JSONPlaceholder** | Fake REST API for users |
-| **Local Storage** | Data persistence |
+- **Frontend:** React (Vite), Tailwind CSS
+- **Backend:** Node.js, Express.js
+- **Middleware:** Express JSON parser, Custom Logger, CORS
+- **Database:** Temporary In-Memory Data (Array)
 
 ---
 
 ##  Project Structure
-
-tailwind-dashboard/
-├── src/
+  
+    `````
+	tailwind-dashboard/
+│
+├── backend/ # Express Backend
+│ ├── controllers/
+│ │ └── userController.js # Logic for handling user data (CRUD)
+│ ├── routes/
+│ │ └── userRoutes.js # API Route definitions
+│ ├── .gitignore # Protects sensitive files from being pushed
+│ └── server.js # Main Express Server
+│
+├── src/ # React Frontend
 │ ├── components/
-│ │ ├── Header.jsx
 │ │ ├── AddUserForm.jsx
+│ │ ├── EditModal.jsx
+│ │ ├── Header.jsx
 │ │ ├── SearchBar.jsx
-│ │ ├── UserCard.jsx
-│ │ ├── UserList.jsx
 │ │ ├── StatusMessage.jsx
-│ │ └── EditModal.jsx
-│ ├── App.jsx
-│ ├── main.jsx
-│ └── index.css
-├── index.html
-├── package.json
-├── package-lock.json
-├── tailwind.config.js
-├── postcss.config.js
-├── vite.config.js
-├── .gitignore
-└── README.md
+│ │ └── UserList.jsx
+│ └── App.jsx # Main React App
+│
+└── package.json
 
----
+    `````
+	
 
-##  How to Run the Project
+##  Installation & Setup
 
-### Prerequisites
-- Node.js installed on your system
-
-### Installation
+### 1. Install Frontend Dependencies
 ```bash
-# Clone the repository
-git clone https://github.com/emanashrafch1212-hue/tailwind-dashboard.git
-
-# Navigate to project
-cd tailwind-dashboard
-
-# Install dependencies
 npm install
-
-# Start development server
+### 2. Install Backend Dependencies
+cd backend
+npm install
+cd ..
+###Start the Backend
+cd backend
+npx nodemon server.js
+###Start the Frontend
 npm run dev
 
-Links
-GitHub Repository: https://github.com/emanashrafch1212-hue/tailwind-dashboard
+ ----
+ 
+ ### API Endpoints
+| Method | Endpoint         | Description                     | Status Codes |
+|--------|------------------|---------------------------------|--------------|
+| GET    | `/`              | Welcome message                 | 200          |
+| GET    | `/api/status`    | Check if the backend is running | 200          |
+| GET    | `/api/users`     | Fetch all users (with search)   | 200          |
+| GET    | `/api/users/:id` | Fetch a single user             | 200 / 404    |
+| POST   | `/api/users`     | Create a new user               | 201 / 400    |
+| PUT    | `/api/users/:id` | Update an existing user         | 200 / 404    |
+| DELETE | `/api/users/:id` | Delete a user                   | 200 / 404    |
+
+ ----
+ 
+### Features & Concepts Implemented
+REST API: GET, POST, PUT, DELETE requests implemented correctly.
+
+Middleware: express.json(), Custom Logger Middleware, and CORS.
+
+Error Handling: Proper error messages for duplicate emails, invalid data, and missing users.
+
+Bonus Features: GET /api/users?search=ali and separated controllers from routes.
+
+React Integration: Frontend sends POST, PUT, and DELETE requests to the backend.
+
+Offline Detection: The frontend detects when the backend is offline and displays an error message.

@@ -1,4 +1,4 @@
-function Header({ userCount, apiCount, localCount, darkMode, toggleDarkMode }) {
+function Header({ userCount, apiCount, darkMode, toggleDarkMode }) {
   return (
     <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-white/40 dark:border-white/10 animate-slide-up">
       <div>
@@ -30,14 +30,6 @@ function Header({ userCount, apiCount, localCount, darkMode, toggleDarkMode }) {
           <div>
             <div className="text-xs font-medium opacity-80">API</div>
             <div className="text-xl font-bold">{apiCount}</div>
-          </div>
-        </div>
-
-        <div className="stat-card stat-local">
-          <span className="text-2xl">📋</span>
-          <div>
-            <div className="text-xs font-medium opacity-80">Local</div>
-            <div className="text-xl font-bold">{localCount}</div>
           </div>
         </div>
 

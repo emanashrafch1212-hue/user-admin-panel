@@ -1,116 +1,44 @@
-// ================================================================
-// NODE.JS BACKEND - User Management Dashboard
-// ================================================================
+const express = require('express');
+const dotenv = require('dotenv');
+const cors = require('cors'); // <--- ADDED THIS
+const userRoutes = require('./routes/userRoutes');
 
-// Import built-in Node.js modules
-const http = require('http');
-const url = require('url');
+dotenv.config();
 
-// ================================================================
-// SERVER CONFIGURATION
-// ================================================================
-
+const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ================================================================
-// REQUEST HANDLER
-// ================================================================
+// Allow requests from React frontend (CORS)
+app.use(cors()); // <--- ADDED THIS
 
-const requestHandler = (req, res) => {
-  // Parse the URL
-  const parsedUrl = url.parse(req.url, true);
-  const path = parsedUrl.pathname;
-  const method = req.method;
+// Middleware to parse JSON
+app.use(express.json());
 
-  console.log(`[${new Date().toISOString()}] ${method} ${path}`);
-
-  // ================================================================
-  // ROUTES
-  // ================================================================
-
-  // GET / - Root endpoint
-  if (path === '/' && method === 'GET') {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('✅ Backend is running!');
-    return;
-  }
-
-  // GET /api/status - Status endpoint
-  if (path === '/api/status' && method === 'GET') {
-    const response = {
-      status: 'success',
-      message: 'Backend server is running',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      memory: process.memoryUsage(),
-      nodeVersion: process.version
-    };
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(response, null, 2));
-    return;
-  }
-
-  // GET /api/users - Placeholder for future users endpoint
-  if (path === '/api/users' && method === 'GET') {
-    const response = {
-      status: 'success',
-      message: 'Users endpoint (coming soon)',
-      users: []
-    };
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(response, null, 2));
-    return;
-  }
-
-  // 404 - Not Found
-  res.writeHead(404, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({
-    status: 'error',
-    message: 'Endpoint not found',
-    path: path
-  }));
-};
-
-// ================================================================
-// CREATE SERVER
-// ================================================================
-
-const server = http.createServer(requestHandler);
-
-// ================================================================
-// START SERVER
-// ================================================================
-
-server.listen(PORT, () => {
-  console.log('========================================');
-  console.log('🚀 User Management Backend');
-  console.log('========================================');
-  console.log(`📡 Server running on: http://localhost:${PORT}`);
-  console.log(`📋 Test endpoints:`);
-  console.log(`   GET  /          - Check if server is running`);
-  console.log(`   GET  /api/status - Get server status`);
-  console.log(`   GET  /api/users  - Get users (coming soon)`);
-  console.log('========================================');
-  console.log(`🔧 Node version: ${process.version}`);
-  console.log('========================================');
-  console.log('Press Ctrl+C to stop the server');
-  console.log('========================================');
+// Simple logger middleware
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    next();
 });
 
-// ================================================================
-// GRACEFUL SHUTDOWN
-// ================================================================
-
-process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
-  server.close(() => {
-    console.log('HTTP server closed');
-  });
+// Task 1: Basic endpoints
+app.get('/', (req, res) => {
+    res.json({ message: 'User Management Backend API' });
 });
 
-process.on('SIGINT', () => {
-  console.log('SIGINT signal received: closing HTTP server');
-  server.close(() => {
-    console.log('HTTP server closed');
-  });
+app.get('/api/status', (req, res) => {
+    res.json({ status: 'Backend is running successfully' });
+});
+
+// Mount the user routes
+app.use('/api/users', userRoutes);
+
+// Bonus: Global error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ message: 'Something went wrong on the server' });
+});
+
+// Start server
+app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
 });

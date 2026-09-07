@@ -6,7 +6,7 @@ function AddUserForm({ onAddUser }) {
   const [course, setCourse] = useState('');
   const [message, setMessage] = useState({ text: '', type: '' });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!name || !email || !course) {
@@ -20,12 +20,20 @@ function AddUserForm({ onAddUser }) {
       return;
     }
 
-    const result = onAddUser(name, email, course);
+    // Wait for the backend response
+    const result = await onAddUser(name, email, course);
+
     if (result === 'duplicate') {
       setMessage({ text: '⚠️ Email already exists.', type: 'message-error' });
       return;
     }
 
+    if (result === 'error') {
+      setMessage({ text: '⚠️ An error occurred. Please check the backend.', type: 'message-error' });
+      return;
+    }
+
+    // If success, clear the form and show success message
     setName('');
     setEmail('');
     setCourse('');
