@@ -16,32 +16,37 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [backendStatus, setBackendStatus] = useState('Checking...');
 
+  // No local filtering - return exactly what the backend sends
   const getFilteredUsers = () => {
-    let filtered = [...users];
-    if (searchTerm.trim() !== '') {
-      filtered = filtered.filter(u =>
-        u.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    if (currentFilter !== 'all') {
-      filtered = filtered.filter(u =>
-        u.course?.toLowerCase() === currentFilter.toLowerCase()
-      );
-    }
-    return filtered;
+    return users;
   };
 
   const totalCount = users.length;
   const apiCount = users.filter(u => u.source === 'api').length;
 
-  // ===== Load users and Check Connection ONLY ONCE =====
+  // ===== Load users from Backend (WITH SEARCH & COURSE FILTER SUPPORT) =====
   useEffect(() => {
     setStatus({ message: '⏳ Loading users...', type: 'loading' });
     setBackendStatus('Checking...');
 
     const checkBackend = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/users', {
+        // Build URL with search AND course filter
+        let url = 'http://localhost:5000/api/users';
+        const params = [];
+        
+        if (searchTerm.trim() !== '') {
+          params.push(`search=${searchTerm}`);
+        }
+        if (currentFilter !== 'all') {
+          params.push(`course=${currentFilter}`);
+        }
+        
+        if (params.length > 0) {
+          url += `?${params.join('&')}`;
+        }
+
+        const response = await fetch(url, {
           cache: 'no-store'
         });
         if (!response.ok) throw new Error('Failed to fetch');
@@ -53,7 +58,6 @@ function App() {
         setBackendStatus('✅ Backend Connected');
         setStatus({ message: '✅ Backend Connected. Users loaded.', type: 'success' });
         
-        // Hide the message after 3 seconds
         setTimeout(() => {
           setStatus({ message: '', type: '' });
         }, 3000);
@@ -67,8 +71,10 @@ function App() {
       }
     };
 
-    checkBackend(); // ONLY check when page loads
-  }, []);
+    checkBackend();
+
+    // Fetch again when search or filter changes
+  }, [searchTerm, currentFilter]);
 
   // ===== UPDATED: Add user (POST) =====
   const addUser = async (name, email, course) => {

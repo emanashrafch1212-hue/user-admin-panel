@@ -8,19 +8,19 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Allow requests from React frontend (CORS)
+// Middleware to allow React to talk to Backend
 app.use(cors());
 
 // Middleware to parse JSON
 app.use(express.json());
 
-// Simple logger middleware
+// CUSTOM LOGGER MIDDLEWARE
 app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url}`);
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
 });
 
-// Task 1: Basic endpoints
+// Basic endpoints
 app.get('/', (req, res) => {
     res.json({ message: 'User Management Backend API' });
 });
@@ -32,7 +32,12 @@ app.get('/api/status', (req, res) => {
 // Mount the user routes
 app.use('/api/users', userRoutes);
 
-// Bonus: Global error handling middleware
+// 404 HANDLING MIDDLEWARE (This catches any route that doesn't exist)
+app.use((req, res, next) => {
+    res.status(404).json({ message: "Route not found" });
+});
+
+// GLOBAL ERROR HANDLING MIDDLEWARE (Catches all errors)
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: 'Something went wrong on the server' });
